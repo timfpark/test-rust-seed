@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+  labels:
+    app: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app
+  template:
+    metadata:
+      labels:
+        app: app
+    spec:
+      containers:
+      - name: app
+        image: k3d-host.k3d.internal:12345/app:${TAG}
+        imagePullPolicy: Always   # TODO: tag w/ timestamp
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app
+spec:
+  selector: 
+    app: app
+  type: ClusterIP  
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: app
+spec:
+  routes:
+    - match: PathPrefix(`/`)
+      kind: Rule
+      services:
+        - name: app
+          port: 3000
